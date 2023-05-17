@@ -50,7 +50,6 @@ class _HomePageScreenState extends State<HomePageScreen> {
 
   Future<void> _fetchPage(int pageKey) async {
     try {
-      // Simulate fetching data from your data source
       final List<String> newDataList = await fetchYourData(pageKey, _pageSize);
 
       final isLastPage = newDataList.length < _pageSize;
@@ -66,15 +65,8 @@ class _HomePageScreenState extends State<HomePageScreen> {
   }
 
   Future<List<String>> fetchYourData(int pageKey, int pageSize) async {
-    // Replace this with your actual data fetching logic
-    // Fetch the data based on the pageKey and pageSize
-    // You can use a network call, database query, or any other method
-    // to fetch the data
+    await Future.delayed(const Duration(seconds: 2));
 
-    // Simulating data fetching delay
-    await Future.delayed(Duration(seconds: 2));
-
-    // Generate sample data
     final List<String> newDataList = [];
     final startIndex = pageKey * pageSize;
     final endIndex = startIndex + pageSize;
@@ -236,6 +228,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
               _pagingController.refresh();
               exchangePressed = true;
             });
+            dateHandle(context);
           },
           icon: const Icon(Icons.currency_exchange),
           label: const TextWidget(
@@ -433,6 +426,7 @@ class _HomePageScreenState extends State<HomePageScreen> {
                       ? selectedToDate = value!
                       : selectedBeforeDate = value!;
                 });
+                dateHandle(context);
               },
             );
           },
@@ -456,6 +450,19 @@ class _HomePageScreenState extends State<HomePageScreen> {
             ],
           )),
     );
+  }
+
+  void dateHandle(BuildContext context) {
+    if (selectedBeforeDate.isAfter(selectedToDate)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        backgroundColor: AppColor.pink,
+        behavior: SnackBarBehavior.floating,
+        content: TextWidget(
+            txt: 'Choose date correctly!!',
+            fontWeight: FontWeight.bold,
+            fontSize: 20),
+      ));
+    }
   }
 
   Future<DateTime?> showDate(BuildContext context) async {
