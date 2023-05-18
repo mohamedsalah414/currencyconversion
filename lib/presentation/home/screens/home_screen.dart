@@ -98,146 +98,151 @@ class _HomePageScreenState extends State<HomePageScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            const TextWidget(
-              txt: AppStrings.choosePeriod,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              textAlign: TextAlign.center,
-            ),
-            10.ph,
-            buildDatesRow(context),
-            25.ph,
-            TextWidget(
-              txt: 'Base Currency : ${dropDownBaseValue ?? ''}',
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            buildBaseDropDown(),
-            15.ph,
-            TextWidget(
-              txt: 'Convert to : ${dropDownConvertToValue ?? ''}',
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-            buildConvertDropDown(),
-            25.ph,
-            Visibility(
-              visible: convertSelected == false || baseSelected == false,
-              child: const TextWidget(
-                txt: 'You should select currencies',
-                textAlign: TextAlign.center,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-            Visibility(
-              visible: exchangePressed,
-              child: Column(
-                children: [
-                  BlocBuilder<ExchangeCubit, ExchangeState<ExchangeRates>>(
-                    builder: (context, ExchangeState<ExchangeRates> state) {
-                      return state.when(
-                        idle: () => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        loading: () => const Center(
-                          child: CircularProgressIndicator(),
-                        ),
-                        success: (ExchangeRates exchangeRates) {
-                          _dataList = exchangeRates.rates.keys.toList();
-                          return Container(
-                              padding: const EdgeInsets.all(15),
-                              height: context.height * .35,
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: AppColor.blue),
-                              child: PagedListView<int, String>(
-                                  pagingController: _pagingController,
-                                  builderDelegate:
-                                      PagedChildBuilderDelegate<String>(
-                                    itemBuilder: (context, item, index) {
-                                      final date = item;
-                                      return ListTile(
-                                        subtitle: TextWidget(
-                                          txt: 'Date: $date',
-                                          // fontWeight: FontWeight.bold,
-                                          // fontSize: 18,
-                                          color: AppColor.white2,
-                                        ),
-                                        leading: CircleAvatar(
-                                          child:
-                                              TextWidget(txt: '${index + 1}'),
-                                        ),
-                                        title: ListView.builder(
-                                          shrinkWrap: true,
-                                          physics:
-                                              const NeverScrollableScrollPhysics(),
-                                          itemCount:
-                                              exchangeRates.rates[date]!.length,
-                                          itemBuilder: (context, index) {
-                                            final currencyCode = exchangeRates
-                                                .rates[date]!.keys
-                                                .toList()[index];
-                                            final exchangeRate = exchangeRates
-                                                .rates[date]![currencyCode];
-                                            return TextWidget(
-                                              txt:
-                                                  '$currencyCode: $exchangeRate',
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 20,
-                                              color: AppColor.white2,
-                                            );
-                                          },
-                                        ),
-                                      );
-                                    },
-                                  )));
-                        },
-                        error: (NetworkExceptions networkExceptions) {
-                          return Center(
-                            child: Text(NetworkExceptions.getErrorMessage(
-                                networkExceptions)),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        child: buildColumnContainsData(context),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Visibility(
-        visible: convertSelected && baseSelected,
-        child: FloatingActionButton.extended(
-          onPressed: () {
-            setState(() {
-              BlocProvider.of<ExchangeCubit>(context).emitGetExchangeRates(
-                  DateFormat('yyyy-MM-dd')
-                      .format(selectedBeforeDate)
-                      .toString(),
-                  DateFormat('yyyy-MM-dd').format(selectedToDate).toString(),
-                  dropDownBaseValue.toString(),
-                  dropDownConvertToValue.toString());
-              _pagingController.refresh();
-              exchangePressed = true;
-            });
-            dateHandle(context);
-          },
-          icon: const Icon(Icons.currency_exchange),
-          label: const TextWidget(
-            txt: 'Currency Exchange',
+      floatingActionButton: buildExchangeFloatButton(context),
+    );
+  }
+
+  Column buildColumnContainsData(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        const TextWidget(
+          txt: AppStrings.choosePeriod,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          textAlign: TextAlign.center,
+        ),
+        10.ph,
+        buildDatesRow(context),
+        25.ph,
+        TextWidget(
+          txt: 'Base Currency : ${dropDownBaseValue ?? ''}',
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+        buildBaseDropDown(),
+        15.ph,
+        TextWidget(
+          txt: 'Convert to : ${dropDownConvertToValue ?? ''}',
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+        buildConvertDropDown(),
+        25.ph,
+        Visibility(
+          visible: convertSelected == false || baseSelected == false,
+          child: const TextWidget(
+            txt: 'You should select currencies',
+            textAlign: TextAlign.center,
             fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: AppColor.black,
+            fontSize: 20,
           ),
         ),
+        buildPaginationListForCurrencies(),
+      ],
+    );
+  }
+
+  Visibility buildExchangeFloatButton(BuildContext context) {
+    return Visibility(
+      visible: convertSelected && baseSelected,
+      child: FloatingActionButton.extended(
+        onPressed: () {
+          setState(() {
+            BlocProvider.of<ExchangeCubit>(context).emitGetExchangeRates(
+                DateFormat('yyyy-MM-dd').format(selectedBeforeDate).toString(),
+                DateFormat('yyyy-MM-dd').format(selectedToDate).toString(),
+                dropDownBaseValue.toString(),
+                dropDownConvertToValue.toString());
+            _pagingController.refresh();
+            exchangePressed = true;
+          });
+          dateHandle(context);
+        },
+        icon: const Icon(Icons.currency_exchange),
+        label: const TextWidget(
+          txt: 'Currency Exchange',
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          color: AppColor.black,
+        ),
+      ),
+    );
+  }
+
+  Visibility buildPaginationListForCurrencies() {
+    return Visibility(
+      visible: exchangePressed,
+      child: Column(
+        children: [
+          BlocBuilder<ExchangeCubit, ExchangeState<ExchangeRates>>(
+            builder: (context, ExchangeState<ExchangeRates> state) {
+              return state.when(
+                idle: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                success: (ExchangeRates exchangeRates) {
+                  _dataList = exchangeRates.rates.keys.toList();
+                  return Container(
+                      padding: const EdgeInsets.all(15),
+                      height: context.height * .35,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: AppColor.blue),
+                      child: PagedListView<int, String>(
+                          pagingController: _pagingController,
+                          builderDelegate: PagedChildBuilderDelegate<String>(
+                            itemBuilder: (context, item, index) {
+                              final date = item;
+                              return ListTile(
+                                subtitle: TextWidget(
+                                  txt: 'Date: $date',
+                                  // fontWeight: FontWeight.bold,
+                                  // fontSize: 18,
+                                  color: AppColor.white2,
+                                ),
+                                leading: CircleAvatar(
+                                  child: TextWidget(txt: '${index + 1}'),
+                                ),
+                                title: ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: exchangeRates.rates[date]!.length,
+                                  itemBuilder: (context, index) {
+                                    final currencyCode = exchangeRates
+                                        .rates[date]!.keys
+                                        .toList()[index];
+                                    final exchangeRate = exchangeRates
+                                        .rates[date]![currencyCode];
+                                    return TextWidget(
+                                      txt: '$currencyCode: $exchangeRate',
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                      color: AppColor.white2,
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          )));
+                },
+                error: (NetworkExceptions networkExceptions) {
+                  return Center(
+                    child: Text(
+                        NetworkExceptions.getErrorMessage(networkExceptions)),
+                  );
+                },
+              );
+            },
+          ),
+        ],
       ),
     );
   }

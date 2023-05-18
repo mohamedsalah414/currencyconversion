@@ -15,9 +15,5 @@ class SymbolsCubit extends Cubit<SymbolsState<SymbolsModel>> {
     }, failure: (NetworkExceptions networkExceptions) {
       emit(SymbolsState.error(networkExceptions));
     });
-
-    // myRepo.getAllUser().then((usersList) {
-    //   emit(GetAllUsers(usersList));
-    // });
   }
 }

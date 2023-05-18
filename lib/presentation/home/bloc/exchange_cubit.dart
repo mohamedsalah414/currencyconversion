@@ -19,9 +19,5 @@ class ExchangeCubit extends Cubit<ExchangeState<ExchangeRates>> {
     }, failure: (NetworkExceptions networkExceptions) {
       emit(ExchangeState.error(networkExceptions));
     });
-
-    // myRepo.getAllUser().then((usersList) {
-    //   emit(GetAllUsers(usersList));
-    // });
   }
 }
